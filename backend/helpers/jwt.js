@@ -5,7 +5,7 @@ function authJwt() {
     secret: "secret",
     algorithms: ["HS256"],
   }).unless({
-    path: ["/api/v1/users/login"],
+    path: ["/api/v1/users/login", "/api/v1/users/register"],
   });
 }
 
