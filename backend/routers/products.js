@@ -5,6 +5,12 @@ const router = express.Router();
 const mongoose = require("mongoose");
 
 router.post(`/`, async (req, res) => {
+  // Validate if category ID is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(req.body.category)) {
+    console.log("Invalid Category ID: ", req.body.category);
+    return res.status(400).send("Invalid category ID");
+  }
+  // Find the category by ID
   const category = await Category.findById(req.body.category);
   if (!category) {
     return res.status(400).send("Invalid category");
@@ -26,7 +32,7 @@ router.post(`/`, async (req, res) => {
 
   product = await product.save();
   if (!product) {
-    res.status(500).send("product cannot be created");
+    return res.status(500).send("product cannot be created");
   }
   res.send(product);
 });
