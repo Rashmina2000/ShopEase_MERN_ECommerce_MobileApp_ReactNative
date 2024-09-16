@@ -3,8 +3,37 @@ const { Product } = require("../models/product");
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
+const multer = require("multer");
 
-router.post(`/`, async (req, res) => {
+const FILE_TYPE_MAP = {
+  "image/png": "png", // MIME(Multipurpose Internet Mail Extension) type
+  "image/jpeg": "jpeg",
+  "image/jpg": "jpg",
+};
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const isValid = FILE_TYPE_MAP[file.mimetype];
+    let uploadError = new Error("Invalid image type");
+
+    if (isValid) {
+      uploadError = null;
+    }
+
+    cb(uploadError, "D:/React prjects/ShopEase/backend/public/uploads");
+  },
+  filename: function (req, file, cb) {
+    const fileName = file.originalname.split(" ").join("-");
+    const extension = FILE_TYPE_MAP[file.mimetype]; // it goto FILE_TYPE_MAP and check MIME type which one of those
+    // and assign the extension as a value
+    cb(null, `${fileName}-${Date.now()}.${extension}`);
+  },
+});
+
+const uploadOptions = multer({ storage: storage });
+
+router.post(`/`, uploadOptions.single("image"), async (req, res) => {
+  // 'image' is field name where send image from frontend
   // Validate if category ID is a valid ObjectId
   if (!mongoose.Types.ObjectId.isValid(req.body.category)) {
     console.log("Invalid Category ID: ", req.body.category);
@@ -16,11 +45,14 @@ router.post(`/`, async (req, res) => {
     return res.status(400).send("Invalid category");
   }
 
+  const fileName = req.file.filename;
+  const basePath = `${req.protocol}://${req.get("host")}/public/upload`;
+
   let product = new Product({
     name: req.body.name,
     description: req.body.description,
     richDescription: req.body.richDescription,
-    image: req.body.image,
+    image: `${basePath}${fileName}`,
     brand: req.body.brand,
     price: req.body.price,
     category: req.body.category,
