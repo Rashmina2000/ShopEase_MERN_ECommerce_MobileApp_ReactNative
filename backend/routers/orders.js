@@ -115,4 +115,16 @@ router.delete(`/:id`, (req, res) => {
     });
 });
 
+router.get(`/get/totalsales`, async (req, res) => {
+  const totalSales = await Order.aggregate([
+    { $group: { _id: null, totalSales: { $sum: "$totalPrice" } } }, // "$totalPrice" is the field in order
+  ]);
+
+  if (!totalSales) {
+    return res.status(400).send("The order sales can not generate");
+  }
+  res.send({ totalsales: totalSales });
+});
+//calculate all total price from orders into one value
+
 module.exports = router;
