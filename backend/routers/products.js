@@ -188,4 +188,35 @@ router.get(`/get/featured/:count`, async (req, res) => {
   res.send(products);
 });
 
+//update for upload image gallery
+router.put(
+  `/gallery-images/:id`,
+  uploadOptions.array("images", 5),
+  async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).send("Invalid product id");
+    }
+    const files = req.files;
+    let imagesPaths = [];
+    const basePath = `${req.protocol}://${req.get("host")}/public/upload`;
+    if (files) {
+      files.map((file) => {
+        imagesPaths.push(`${basePath}${file.filename}`); // here filename is multer's filename
+      });
+    }
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        images: imagesPaths,
+      },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(500).send("Image gallery cannot update");
+    }
+    res.send(product);
+  }
+);
+
 module.exports = router;
