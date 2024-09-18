@@ -45,8 +45,12 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
     return res.status(400).send("Invalid category");
   }
 
+  const file = req.file;
+  if (!file) {
+    return res.status(400).send("No image");
+  }
   const fileName = req.file.filename;
-  const basePath = `${req.protocol}://${req.get("host")}/public/upload`;
+  const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
 
   let product = new Product({
     name: req.body.name,
@@ -100,7 +104,7 @@ router.get(`/:id`, async (req, res) => {
   res.send(product);
 });
 
-router.put(`/:id`, async (req, res) => {
+router.put(`/:id`, uploadOptions.single("image"), async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     res.status(400).send("Invalid product id");
   }
@@ -109,13 +113,28 @@ router.put(`/:id`, async (req, res) => {
     return res.status(400).send("Invalid category");
   }
 
+  const productFind = await Product.findById(req.params.id);
+  if (!productFind) {
+    return res.status(400).send("Invalid product");
+  }
+
+  const file = req.file;
+  let imagePath;
+  if (file) {
+    const fileName = req.file.filename;
+    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+    imagePath = `${basePath}${fileName}`;
+  } else {
+    imagePath = productFind.image;
+  }
+
   const product = await Product.findByIdAndUpdate(
     req.params.id,
     {
       name: req.body.name,
       description: req.body.description,
       richDescription: req.body.richDescription,
-      image: req.body.image,
+      image: imagePath,
       brand: req.body.brand,
       price: req.body.price,
       category: req.body.category,
@@ -168,5 +187,36 @@ router.get(`/get/featured/:count`, async (req, res) => {
   }
   res.send(products);
 });
+
+//update for upload image gallery
+router.put(
+  `/gallery-images/:id`,
+  uploadOptions.array("images", 5),
+  async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).send("Invalid product id");
+    }
+    const files = req.files;
+    let imagesPaths = [];
+    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+    if (files) {
+      files.map((file) => {
+        imagesPaths.push(`${basePath}${file.filename}`); // here filename is multer's filename
+      });
+    }
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        images: imagesPaths,
+      },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(500).send("Image gallery cannot update");
+    }
+    res.send(product);
+  }
+);
 
 module.exports = router;
