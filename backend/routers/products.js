@@ -50,7 +50,7 @@ router.post(`/`, uploadOptions.single("image"), async (req, res) => {
     return res.status(400).send("No image");
   }
   const fileName = req.file.filename;
-  const basePath = `${req.protocol}://${req.get("host")}/public/upload`;
+  const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
 
   let product = new Product({
     name: req.body.name,
@@ -122,7 +122,7 @@ router.put(`/:id`, uploadOptions.single("image"), async (req, res) => {
   let imagePath;
   if (file) {
     const fileName = req.file.filename;
-    const basePath = `${req.protocol}://${req.get("host")}/public/upload`;
+    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
     imagePath = `${basePath}${fileName}`;
   } else {
     imagePath = productFind.image;
@@ -198,7 +198,7 @@ router.put(
     }
     const files = req.files;
     let imagesPaths = [];
-    const basePath = `${req.protocol}://${req.get("host")}/public/upload`;
+    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
     if (files) {
       files.map((file) => {
         imagesPaths.push(`${basePath}${file.filename}`); // here filename is multer's filename
